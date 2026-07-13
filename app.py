@@ -216,7 +216,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 # ══ TAB 1 ══════════════════════════════════════════════════════════════════════
 with tab1:
-    st.markdown('<div class="lsa-section">// Hot stamping press — 10,000 cycle dataset</div>',
+    st.markdown('<div class="lsa-section">// Hot stamping press — 10,312 cycle dataset</div>',
                 unsafe_allow_html=True)
     cl, cr = st.columns([1.3, 1])
     with cl:

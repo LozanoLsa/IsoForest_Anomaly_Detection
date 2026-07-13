@@ -18,7 +18,7 @@ Isolation Forest approaches the problem differently. It never asks what normal l
 
 This design has two consequences that matter for industrial monitoring. First, there is no assumption about the shape of the normal distribution — the algorithm works across Gaussian, skewed, and multimodal sensors simultaneously. Second, the continuous score enables tiered maintenance response: Normal → Mild → Moderate → Critical. The response can be proportional to the threat, not just binary.
 
-This notebook demonstrates that architecture on 10,000 stamping cycles across three simultaneous failure modes — without the model ever seeing a single label during training.
+This notebook demonstrates that architecture on 10,312 stamping cycles across three simultaneous failure modes — without the model ever seeing a single label during training.
 
 ---
 
@@ -26,10 +26,10 @@ This notebook demonstrates that architecture on 10,000 stamping cycles across th
 
 | Property | Value |
 |---|---|
-| Records | 10,000 stamping cycles |
+| Records | 10,312 stamping cycles |
 | Features | 9 continuous sensor signals |
 | Target | `is_anomaly` — engineer-validated ground truth (used for evaluation only) |
-| Anomaly rate | 3.0% (300 flagged cycles) |
+| Anomaly rate | 3.0% (309 flagged cycles) |
 | Anomaly types | Type A (Mechanical) · Type B (Thermal) · Type C (Low-Pressure) |
 | Source | Simulated hot stamping press line — boron steel automotive components |
 
@@ -86,21 +86,21 @@ The continuous score also provides something operationally valuable: a severity 
 
 | Metric | Value | Operational Meaning |
 |---|---|---|
-| **Precision** | 0.8467 | 84.7% of alarms are real anomalies — 46 false positives per 10,000 cycles |
-| **Recall** | 0.8467 | 84.7% of real anomalies are caught — 46 missed events per 10,000 cycles |
-| **F1-Score** | 0.8467 | Strong balanced performance across all three anomaly types |
-| **Accuracy** | 0.9908 | 9,908 of 10,000 cycles correctly classified |
-| **IF Score range** | [−0.710, −0.364] | Full score distribution across 10,000 cycles |
-| **Decision threshold** | −0.5349 | 3rd percentile — calibrated to 3% contamination prior |
+| **Precision** | 0.8516 | 85.2% of alarms are real anomalies — 46 false positives per 10,312 cycles |
+| **Recall** | 0.8544 | 85.4% of real anomalies are caught — 45 missed events per 10,312 cycles |
+| **F1-Score** | 0.8530 | Strong balanced performance across all three anomaly types |
+| **Accuracy** | 0.9912 | 10,221 of 10,312 cycles correctly classified |
+| **IF Score range** | [−0.708, −0.358] | Full score distribution across 10,312 cycles |
+| **Decision threshold** | −0.5326 | 3rd percentile — calibrated to 3% contamination prior |
 
-**Confusion Matrix (N = 10,000 cycles):**
+**Confusion Matrix (N = 10,312 cycles):**
 
 |  | Predicted Normal | Predicted Anomaly |
 |---|---|---|
-| **Actually Normal** | 9,654 ✅ | 46 ⚠ |
-| **Actually Anomaly** | 46 ⚠ | 254 ✅ |
+| **Actually Normal** | 9,957 ✅ | 46 ⚠ |
+| **Actually Anomaly** | 45 ⚠ | 264 ✅ |
 
-**The 46 false negatives are Type C (low-pressure) anomalies.** Their press force drops only ~5% below normal mean — within the overlap zone of the normal distribution for that sensor. These can be addressed by adding a domain-rule post-filter (`press_force_ton < 200`) without retraining the model.
+**The 45 false negatives are Type C (low-pressure) anomalies.** Their press force drops only ~5% below normal mean — within the overlap zone of the normal distribution for that sensor. These can be addressed by adding a domain-rule post-filter (`press_force_ton < 200`) without retraining the model.
 
 **Contamination sensitivity confirms the 3% prior is optimal.** F1 degrades at contamination = 0.02 (misses too many) and 0.05 (too many false alarms). The 0.03 setting maximizes balanced detection performance.
 
@@ -112,15 +112,15 @@ Isolation Forest does not output feature importances natively. Feature-score cor
 
 | Feature | Correlation with IF Score | Direction | Anomaly Δ |
 |---|---|---|---|
-| `vibration_y_mm_s` | −0.2394 | High value → more anomalous | +52.7% |
-| `vibration_x_mm_s` | −0.2221 | High value → more anomalous | +50.0% |
-| `energy_kwh` | −0.1741 | High value → more anomalous | +11.2% |
-| `cycle_time_s` | −0.1592 | High value → more anomalous | +13.5% |
-| `tool_temp_c` | −0.1092 | High value → more anomalous | +2.2% |
-| `press_force_ton` | +0.1167 | Low value → more anomalous | −5.0% |
-| `contact_force_kn` | +0.0625 | Low value → more anomalous | −4.1% |
+| `vibration_x_mm_s` | −0.2406 | High value → more anomalous | +50.0% |
+| `vibration_y_mm_s` | −0.2177 | High value → more anomalous | +52.7% |
+| `energy_kwh` | −0.1784 | High value → more anomalous | +11.2% |
+| `cycle_time_s` | −0.1518 | High value → more anomalous | +13.5% |
+| `tool_temp_c` | −0.1084 | High value → more anomalous | +2.2% |
+| `press_force_ton` | +0.1220 | Low value → more anomalous | −5.0% |
+| `contact_force_kn` | +0.0675 | Low value → more anomalous | −4.1% |
 
-Vibration is the dominant isolation signal — anomalous cycles show 50%+ elevation in both axes. Force channels are inverse drivers: their anomaly signature is a drop, not a spike, which is why the positive correlation indicates lower force → shorter path → more anomalous.
+Vibration is the dominant isolation signal — anomalous cycles show 50%+ elevation in both axes. `vibration_x_mm_s` is the single strongest individual isolation driver. Force channels are inverse drivers: their anomaly signature is a drop, not a spike, which is why the positive correlation indicates lower force → shorter path → more anomalous.
 
 **Anomaly type breakdown across detected events:**
 
@@ -156,7 +156,7 @@ IsoForest-Anomaly-Detection/
 └── README.md
 ```
 
-> 📦 **Full Project Pack** — complete 10,000-cycle dataset, notebook with full outputs,
+> 📦 **Full Project Pack** — complete 10,312-cycle dataset, notebook with full outputs,
 > presentation deck (PPTX + PDF), and `app.py` real-time simulator available on
 > [Gumroad](https://lozanolsa.gumroad.com).
 
@@ -187,7 +187,7 @@ jupyter notebook 21_IsoForest_Anomaly_Detection.ipynb
 
 2. **StandardScaler is not optional here — it changes the result.** Without scaling, sensors with wide absolute ranges dominate random split selection. The scaler is fitted on the training set and must be applied identically to all new cycles in production. Fitting a new scaler on incoming data resets the baseline and invalidates the model.
 
-3. **The 84.7% recall on Type C anomalies is an honest result, not a failure.** Low-pressure failures express themselves as a 5% force drop — within the overlap zone of the normal distribution. No unsupervised method can reliably separate signals that small without domain knowledge. The notebook shows the correct response: add a domain rule post-filter for `press_force_ton < 200` rather than forcing the algorithm to solve a physics problem it cannot see.
+3. **The 85.4% recall on Type C anomalies is an honest result, not a failure.** Low-pressure failures express themselves as a 5% force drop — within the overlap zone of the normal distribution. No unsupervised method can reliably separate signals that small without domain knowledge. The notebook shows the correct response: add a domain rule post-filter for `press_force_ton < 200` rather than forcing the algorithm to solve a physics problem it cannot see.
 
 4. **Continuous scoring is worth more than the binary flag.** The difference between a score of −0.67 and −0.54 maps directly to a difference in maintenance urgency. A stop-cycle alarm and a monitor-and-inspect recommendation are not the same response. The severity tier system built in Section 10 demonstrates how to operationalize this gradient without additional modeling.
 
